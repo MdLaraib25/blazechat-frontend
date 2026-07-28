@@ -6,7 +6,9 @@ export const serverUrl =
 
 const socket = io(serverUrl, {
   autoConnect: false,
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  rememberUpgrade: true,
+  timeout: 10000
 })
 
 export default socket
