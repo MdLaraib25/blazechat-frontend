@@ -2,7 +2,7 @@
 
 @import "tailwindcss";
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -14,35 +14,72 @@ html, body, #root {
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background: #FAFAF7;
-  color: #18181B;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+  background: var(--bg);
+  color: var(--ink);
 }
 
-.font-serif-display {
-  font-family: 'Instrument Serif', Georgia, serif;
+:root {
+  --bg:        #FAFAF7;
+  --bg-2:      #F0EDE8;
+  --bg-3:      #E5E0D8;
+  --surface:   #ffffff;
+  --ink:       #18181B;
+  --ink-soft:  #3C3C42;
+  --muted:     #78716C;
+  --muted-2:   #A8A29E;
+  --muted-3:   #C4BFB9;
+  --cobalt:    #2D5BE3;
+  --cobalt-h:  #1E46C7;
+  --cobalt-bg: rgba(45,91,227,0.07);
+  --cobalt-bd: rgba(45,91,227,0.18);
+  --border:    rgba(24,24,27,0.09);
+  --border-2:  rgba(24,24,27,0.06);
+  --green:     #16A34A;
+  --red-hover: #FEF2F2;
+  --red-text:  #EF4444;
+  --red-bd:    #FCA5A5;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
+:root.dark {
+  --bg:        #111113;
+  --bg-2:      #1A1A1E;
+  --bg-3:      #242428;
+  --surface:   #1A1A1E;
+  --ink:       #F0F0F5;
+  --ink-soft:  #C4C4CC;
+  --muted:     #8A8A96;
+  --muted-2:   #606068;
+  --muted-3:   #44444C;
+  --cobalt:    #5B7FE8;
+  --cobalt-h:  #4A6ED4;
+  --cobalt-bg: rgba(91,127,232,0.12);
+  --cobalt-bd: rgba(91,127,232,0.25);
+  --border:    rgba(255,255,255,0.08);
+  --border-2:  rgba(255,255,255,0.05);
+  --green:     #22C55E;
+  --red-hover: rgba(239,68,68,0.1);
+  --red-text:  #F87171;
+  --red-bd:    rgba(239,68,68,0.3);
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 2px; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%            { transform: scale(1);   opacity: 1; }
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #E5E0D8;
-  border-radius: 2px;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.93) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
+
+textarea::placeholder { color: var(--muted-2); }

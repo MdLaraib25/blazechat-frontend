@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useSocket } from '../hooks/useSocket'
 import { generateName } from '../utils/nameGenerator'
+import { useTheme } from '../App'
 import socket from '../socket'
 
 const AVATAR_COLORS = [
@@ -19,18 +20,14 @@ function formatTime(timestamp) {
   })
 }
 
-// ── Avatar
 function Avatar({ name, color, size = 32 }) {
   return (
     <div style={{
       width: size, height: size,
-      borderRadius: '8px',
-      background: color,
+      borderRadius: '8px', background: color,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff',
-      fontSize: size * 0.38,
-      fontWeight: '700',
-      flexShrink: 0,
+      color: '#fff', fontSize: size * 0.38,
+      fontWeight: '700', flexShrink: 0,
       fontFamily: "'DM Sans', sans-serif"
     }}>
       {name.charAt(0)}
@@ -38,25 +35,21 @@ function Avatar({ name, color, size = 32 }) {
   )
 }
 
-// ── System message
 function SystemMessage({ content }) {
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      margin: '10px 0'
+      display: 'flex', alignItems: 'center',
+      gap: '10px', margin: '10px 0'
     }}>
-      <div style={{ flex: 1, height: '1px', background: 'rgba(24,24,27,0.06)' }} />
-      <span style={{ fontSize: '11px', color: '#A8A29E', whiteSpace: 'nowrap' }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+      <span style={{ fontSize: '11px', color: 'var(--muted-2)', whiteSpace: 'nowrap' }}>
         {content}
       </span>
-      <div style={{ flex: 1, height: '1px', background: 'rgba(24,24,27,0.06)' }} />
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
     </div>
   )
 }
 
-// ── Message bubble
 function MessageBubble({ message, myName, isFirst, avatarColor }) {
   const isMe = message.sender === myName
 
@@ -68,11 +61,8 @@ function MessageBubble({ message, myName, isFirst, avatarColor }) {
     <div style={{
       display: 'flex',
       flexDirection: isMe ? 'row-reverse' : 'row',
-      gap: '10px',
-      alignItems: 'flex-end',
-      marginBottom: '2px'
+      gap: '10px', alignItems: 'flex-end', marginBottom: '2px'
     }}>
-      {/* Avatar — only show on first message in group */}
       <div style={{ width: '32px', flexShrink: 0 }}>
         {!isMe && isFirst && (
           <Avatar name={message.sender} color={avatarColor} size={32} />
@@ -80,28 +70,24 @@ function MessageBubble({ message, myName, isFirst, avatarColor }) {
       </div>
 
       <div style={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: 'flex', flexDirection: 'column',
         alignItems: isMe ? 'flex-end' : 'flex-start',
-        maxWidth: '65%',
-        gap: '3px'
+        maxWidth: '65%', gap: '3px'
       }}>
         {isFirst && (
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
+            display: 'flex', alignItems: 'center', gap: '6px',
             flexDirection: isMe ? 'row-reverse' : 'row',
             paddingLeft: isMe ? 0 : '2px',
             paddingRight: isMe ? '2px' : 0,
             marginBottom: '3px'
           }}>
             {!isMe && (
-              <span style={{ fontSize: '12px', fontWeight: '500', color: '#3C3C42' }}>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--ink-soft)' }}>
                 {message.sender}
               </span>
             )}
-            <span style={{ fontSize: '11px', color: '#C4BFB9' }}>
+            <span style={{ fontSize: '11px', color: 'var(--muted-3)' }}>
               {formatTime(message.timestamp)}
             </span>
           </div>
@@ -109,18 +95,14 @@ function MessageBubble({ message, myName, isFirst, avatarColor }) {
 
         <div style={{
           padding: '10px 14px',
-          borderRadius: isMe
-            ? '18px 18px 4px 18px'
-            : '18px 18px 18px 4px',
-          background: isMe ? '#2D5BE3' : '#F0EDE8',
-          color: isMe ? '#fff' : '#18181B',
-          fontSize: '14px',
-          lineHeight: '1.55',
-          wordBreak: 'break-word',
-          maxWidth: '100%',
+          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+          background: isMe ? 'var(--cobalt)' : 'var(--bg-2)',
+          color: isMe ? '#fff' : 'var(--ink)',
+          fontSize: '14px', lineHeight: '1.55',
+          wordBreak: 'break-word', maxWidth: '100%',
           boxShadow: isMe
-            ? '0 2px 8px rgba(45,91,227,0.25)'
-            : '0 1px 3px rgba(0,0,0,0.06)'
+            ? '0 2px 8px rgba(45,91,227,0.2)'
+            : '0 1px 3px rgba(0,0,0,0.04)'
         }}>
           {message.content}
         </div>
@@ -129,7 +111,6 @@ function MessageBubble({ message, myName, isFirst, avatarColor }) {
   )
 }
 
-// ── Typing indicator
 function TypingIndicator({ typingUsers }) {
   if (typingUsers.length === 0) return null
 
@@ -140,44 +121,43 @@ function TypingIndicator({ typingUsers }) {
     : `${typingUsers[0]} and ${typingUsers.length - 1} others are typing`
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 0 4px 42px' }}>
+    <div style={{
+      display: 'flex', alignItems: 'center',
+      gap: '10px', padding: '4px 0 4px 42px'
+    }}>
       <div style={{
         display: 'flex', gap: '3px', alignItems: 'center',
-        background: '#F0EDE8', borderRadius: '12px',
+        background: 'var(--bg-2)', borderRadius: '12px',
         padding: '8px 12px'
       }}>
         {[0, 150, 300].map(delay => (
           <div key={delay} style={{
             width: '5px', height: '5px',
-            borderRadius: '50%', background: '#A8A29E',
+            borderRadius: '50%', background: 'var(--muted-2)',
             animation: 'typingBounce 1.2s ease infinite',
             animationDelay: `${delay}ms`
           }} />
         ))}
       </div>
-      <span style={{ fontSize: '11px', color: '#A8A29E', fontStyle: 'italic' }}>
+      <span style={{ fontSize: '11px', color: 'var(--muted-2)', fontStyle: 'italic' }}>
         {text}
       </span>
     </div>
   )
 }
 
-// ── Sidebar member item
 function MemberItem({ member, isMe, index }) {
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      padding: '8px 10px',
-      borderRadius: '10px',
-      background: isMe ? 'rgba(45,91,227,0.05)' : 'transparent',
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: '8px 10px', borderRadius: '10px',
+      background: isMe ? 'var(--cobalt-bg)' : 'transparent',
       transition: 'background 0.15s'
     }}>
       <Avatar name={member.name} color={getAvatarColor(index)} size={30} />
       <span style={{
         fontSize: '13px', fontWeight: '500',
-        color: '#18181B', flex: 1,
+        color: 'var(--ink)', flex: 1,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
       }}>
         {member.name}
@@ -185,8 +165,8 @@ function MemberItem({ member, isMe, index }) {
       {isMe && (
         <span style={{
           fontSize: '10px', fontWeight: '500',
-          background: 'rgba(45,91,227,0.1)',
-          color: '#2D5BE3',
+          background: 'var(--cobalt-bg)',
+          color: 'var(--cobalt)',
           borderRadius: '4px', padding: '2px 6px'
         }}>
           you
@@ -194,25 +174,33 @@ function MemberItem({ member, isMe, index }) {
       )}
       <div style={{
         width: '7px', height: '7px',
-        borderRadius: '50%', background: '#16A34A',
+        borderRadius: '50%', background: 'var(--green)',
         flexShrink: 0
       }} />
     </div>
   )
 }
 
-// ── Main Room component
 function Room() {
   const { code } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { dark, toggleDark } = useTheme()
 
-  const [myName] = useState(() => generateName())
+  const [myName, setMyName] = useState(() => {
+    const savedName = sessionStorage.getItem('blazechat_name')
+    const savedRoom = sessionStorage.getItem('blazechat_room')
+    if (savedName && savedRoom === code) return savedName
+    return location.state?.name || generateName()
+  })
+
   const [messages, setMessages] = useState([])
   const [members, setMembers] = useState([])
   const [typingUsers, setTypingUsers] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [connected, setConnected] = useState(false)
   const [roomError, setRoomError] = useState('')
+  const [copiedCode, setCopiedCode] = useState(false)
 
   const typingTimeoutRef = useRef(null)
   const textareaRef = useRef(null)
@@ -220,25 +208,40 @@ function Room() {
 
   useEffect(() => {
     let hasJoined = false
+    let isRefreshing = false
+
+    const handleBeforeUnload = () => { isRefreshing = true }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
     if (!socket.connected) socket.connect()
+
+    sessionStorage.setItem('blazechat_room', code)
+    sessionStorage.setItem('blazechat_name', myName)
+
     socket.emit('join-room', { code, name: myName })
     hasJoined = true
 
-    socket.once('room-joined', ({ members, messages }) => {
+    socket.once('room-joined', ({ members, messages, assignedName }) => {
+      if (assignedName && assignedName !== myName) {
+        setMyName(assignedName)
+        sessionStorage.setItem('blazechat_name', assignedName)
+      }
       setMembers(members.map((m, i) => ({ ...m, avatarColor: getAvatarColor(i) })))
       setMessages(messages)
       setConnected(true)
     })
 
     return () => {
-      if (hasJoined) {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (hasJoined && !isRefreshing) {
         socket.emit('leave-room', { code })
+        socket.disconnect()
+      } else if (isRefreshing) {
         socket.disconnect()
       }
     }
-  }, [code, myName])
+  }, [code])
 
-  // auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typingUsers])
@@ -270,6 +273,8 @@ function Room() {
       setTypingUsers(prev => prev.filter(n => n !== name))
     },
     onRoomError: ({ message }) => {
+      sessionStorage.removeItem('blazechat_room')
+      sessionStorage.removeItem('blazechat_name')
       setRoomError(message)
       setTimeout(() => navigate('/'), 2000)
     }
@@ -317,27 +322,43 @@ function Room() {
   }
 
   function handleLeave() {
+    sessionStorage.removeItem('blazechat_room')
+    sessionStorage.removeItem('blazechat_name')
     socket.emit('leave-room', { code })
     socket.disconnect()
     navigate('/')
   }
 
+  function handleCopyCode() {
+    navigator.clipboard.writeText(code)
+    setCopiedCode(true)
+    setTimeout(() => setCopiedCode(false), 2000)
+  }
+
   function isFirstInGroup(index) {
     if (index === 0) return true
-    return messages[index].sender !== messages[index - 1].sender ||
-           messages[index].type === 'system' ||
-           messages[index - 1].type === 'system'
+    return (
+      messages[index].sender !== messages[index - 1].sender ||
+      messages[index].type === 'system' ||
+      messages[index - 1].type === 'system'
+    )
   }
+
+  const isMobile = window.innerWidth < 768
 
   if (roomError) {
     return (
       <div style={{
         height: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        gap: '8px', background: '#FAFAF7'
+        gap: '8px', background: 'var(--bg)'
       }}>
-        <p style={{ fontSize: '15px', fontWeight: '500', color: '#18181B' }}>{roomError}</p>
-        <p style={{ fontSize: '13px', color: '#A8A29E' }}>Redirecting to home...</p>
+        <p style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ink)' }}>
+          {roomError}
+        </p>
+        <p style={{ fontSize: '13px', color: 'var(--muted-2)' }}>
+          Redirecting to home...
+        </p>
       </div>
     )
   }
@@ -347,15 +368,15 @@ function Room() {
       <div style={{
         height: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        gap: '12px', background: '#FAFAF7'
+        gap: '12px', background: 'var(--bg)'
       }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '50%',
-          border: '2.5px solid #E5E0D8',
-          borderTopColor: '#2D5BE3',
+          border: '2.5px solid var(--bg-3)',
+          borderTopColor: 'var(--cobalt)',
           animation: 'spin 0.8s linear infinite'
         }} />
-        <p style={{ fontSize: '13px', color: '#78716C' }}>
+        <p style={{ fontSize: '13px', color: 'var(--muted)' }}>
           Connecting to room {code}...
         </p>
       </div>
@@ -363,62 +384,100 @@ function Room() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAF7', overflow: 'hidden' }}>
+    <div style={{
+      height: '100vh', display: 'flex', flexDirection: 'column',
+      background: 'var(--bg)', overflow: 'hidden'
+    }}>
 
-      {/* Top navbar */}
+      {/* Navbar */}
       <div style={{
         height: '56px', flexShrink: 0,
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
-        background: '#fff',
-        borderBottom: '1px solid rgba(24,24,27,0.07)',
-        zIndex: 10
+        padding: '0 16px',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--border)',
+        zIndex: 10, gap: '8px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             onClick={() => navigate('/')}
             style={{
               width: '28px', height: '28px',
-              background: '#18181B', borderRadius: '8px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer'
+              background: 'var(--ink)', borderRadius: '8px',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', cursor: 'pointer',
+              flexShrink: 0
             }}
           >
-            <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700' }}>B</span>
+            <span style={{
+              color: dark ? '#111' : '#fff',
+              fontSize: '12px', fontWeight: '700'
+            }}>B</span>
           </div>
-          <span style={{ fontWeight: '600', fontSize: '15px', color: '#18181B', letterSpacing: '-0.02em' }}>
-            Blazechat
-          </span>
+          {!isMobile && (
+            <span style={{
+              fontWeight: '600', fontSize: '15px',
+              color: 'var(--ink)', letterSpacing: '-0.02em'
+            }}>
+              Blazechat
+            </span>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: '#F0EDE8',
-            border: '1px solid rgba(24,24,27,0.08)',
-            borderRadius: '8px', padding: '6px 12px'
+            background: 'var(--bg-2)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px', padding: '6px 10px'
           }}>
-            <span style={{ fontSize: '11px', color: '#78716C', fontWeight: '500', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span style={{
+              fontSize: '10px', color: 'var(--muted)',
+              fontWeight: '500', letterSpacing: '0.06em',
+              textTransform: 'uppercase'
+            }}>
               Room
             </span>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#18181B', letterSpacing: '0.08em' }}>
+            <span style={{
+              fontSize: '13px', fontWeight: '600',
+              color: 'var(--ink)', letterSpacing: '0.08em'
+            }}>
               {code}
             </span>
           </div>
+
           <button
-            onClick={() => { navigator.clipboard.writeText(code) }}
+            onClick={handleCopyCode}
             style={{
-              padding: '6px 12px',
-              background: 'rgba(45,91,227,0.07)',
-              border: '1px solid rgba(45,91,227,0.15)',
+              padding: '6px 10px',
+              background: copiedCode ? 'rgba(22,163,74,0.08)' : 'var(--cobalt-bg)',
+              border: `1px solid ${copiedCode ? 'rgba(22,163,74,0.2)' : 'var(--cobalt-bd)'}`,
               borderRadius: '8px',
               fontSize: '12px', fontWeight: '500',
-              color: '#2D5BE3', cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif"
+              color: copiedCode ? 'var(--green)' : 'var(--cobalt)',
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'all 0.18s', whiteSpace: 'nowrap'
             }}
           >
-            Copy code
+            {copiedCode ? 'Copied' : 'Copy code'}
+          </button>
+
+          <button
+            onClick={toggleDark}
+            style={{
+              padding: '6px 10px',
+              background: 'var(--bg-2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              fontSize: '12px', fontWeight: '500',
+              color: 'var(--muted)', cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {dark ? 'Light' : 'Dark'}
           </button>
         </div>
       </div>
@@ -426,84 +485,107 @@ function Room() {
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Sidebar */}
-        <div style={{
-          width: '220px', flexShrink: 0,
-          background: '#FAFAF7',
-          borderRight: '1px solid rgba(24,24,27,0.07)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          {/* Room info */}
-          <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid rgba(24,24,27,0.06)' }}>
-            <div style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#2D5BE3', marginBottom: '4px' }}>
-              Anonymous room
+        {/* Sidebar — hidden on mobile */}
+        {!isMobile && (
+          <div style={{
+            width: '220px', flexShrink: 0,
+            background: 'var(--bg)',
+            borderRight: '1px solid var(--border)',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '16px 14px 12px',
+              borderBottom: '1px solid var(--border-2)'
+            }}>
+              <div style={{
+                fontSize: '10px', fontWeight: '600',
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: 'var(--cobalt)', marginBottom: '4px'
+              }}>
+                Anonymous room
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{
+                  width: '6px', height: '6px',
+                  borderRadius: '50%', background: 'var(--green)'
+                }} />
+                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                  {members.length} {members.length === 1 ? 'person' : 'people'} here
+                </span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A' }} />
-              <span style={{ fontSize: '12px', color: '#78716C' }}>
-                {members.length} {members.length === 1 ? 'person' : 'people'} here
-              </span>
-            </div>
-          </div>
 
-          {/* Members */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
-            <div style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C4BFB9', padding: '4px 8px 10px' }}>
-              Members
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
+              <div style={{
+                fontSize: '10px', fontWeight: '600',
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: 'var(--muted-3)', padding: '4px 8px 10px'
+              }}>
+                Members
+              </div>
+              {members.map((member, index) => (
+                <MemberItem
+                  key={member.id}
+                  member={member}
+                  isMe={member.name === myName}
+                  index={index}
+                />
+              ))}
             </div>
-            {members.map((member, index) => (
-              <MemberItem
-                key={member.id}
-                member={member}
-                isMe={member.name === myName}
-                index={index}
-              />
-            ))}
-          </div>
 
-          {/* Leave */}
-          <div style={{ padding: '12px', borderTop: '1px solid rgba(24,24,27,0.06)' }}>
-            <button
-              onClick={handleLeave}
-              style={{
-                width: '100%', padding: '9px',
-                background: 'none',
-                border: '1px solid rgba(24,24,27,0.1)',
-                borderRadius: '10px',
-                fontSize: '13px', color: '#78716C',
-                fontFamily: "'DM Sans', sans-serif",
-                cursor: 'pointer', transition: 'all 0.18s'
-              }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = '#FCA5A5'
-                e.target.style.color = '#EF4444'
-                e.target.style.background = '#FEF2F2'
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = 'rgba(24,24,27,0.1)'
-                e.target.style.color = '#78716C'
-                e.target.style.background = 'none'
-              }}
-            >
-              Leave room
-            </button>
+            <div style={{
+              padding: '12px',
+              borderTop: '1px solid var(--border-2)'
+            }}>
+              <button
+                onClick={handleLeave}
+                style={{
+                  width: '100%', padding: '9px',
+                  background: 'none',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  fontSize: '13px', color: 'var(--muted)',
+                  fontFamily: "'DM Sans', sans-serif",
+                  cursor: 'pointer', transition: 'all 0.18s'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--red-bd)'
+                  e.currentTarget.style.color = 'var(--red-text)'
+                  e.currentTarget.style.background = 'var(--red-hover)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.color = 'var(--muted)'
+                  e.currentTarget.style.background = 'none'
+                }}
+              >
+                Leave room
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Chat area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', background: 'var(--surface)'
+        }}>
 
           {/* Chat header */}
           <div style={{
-            padding: '14px 24px',
-            borderBottom: '1px solid rgba(24,24,27,0.06)',
+            padding: '12px 20px',
+            borderBottom: '1px solid var(--border-2)',
             flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '15px', fontWeight: '600', color: '#18181B', letterSpacing: '-0.01em' }}>
+                <span style={{
+                  fontSize: '14px', fontWeight: '600',
+                  color: 'var(--ink)', letterSpacing: '-0.01em'
+                }}>
                   Anonymous room
                 </span>
                 <div style={{
@@ -512,59 +594,91 @@ function Room() {
                   border: '1px solid rgba(22,163,74,0.15)',
                   borderRadius: '100px', padding: '2px 8px'
                 }}>
-                  <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#16A34A' }} />
-                  <span style={{ fontSize: '10px', fontWeight: '600', color: '#16A34A', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  <div style={{
+                    width: '5px', height: '5px',
+                    borderRadius: '50%', background: 'var(--green)'
+                  }} />
+                  <span style={{
+                    fontSize: '10px', fontWeight: '600',
+                    color: 'var(--green)', letterSpacing: '0.06em',
+                    textTransform: 'uppercase'
+                  }}>
                     live
                   </span>
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: '#A8A29E', marginTop: '2px' }}>
-                Expires when everyone leaves · messages not saved
+              <div style={{ fontSize: '11px', color: 'var(--muted-2)', marginTop: '2px' }}>
+                {isMobile
+                  ? `${members.length} members · expires when everyone leaves`
+                  : 'Expires when everyone leaves · messages not saved'
+                }
               </div>
             </div>
 
-            {/* Member avatars stack */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Avatar stack */}
               <div style={{ display: 'flex' }}>
-                {members.slice(0, 4).map((m, i) => (
+                {members.slice(0, isMobile ? 3 : 4).map((m, i) => (
                   <div
                     key={m.id}
                     title={m.name}
                     style={{
-                      width: '28px', height: '28px',
+                      width: '26px', height: '26px',
                       borderRadius: '50%',
                       background: getAvatarColor(i),
-                      border: '2px solid #fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '10px', fontWeight: '700', color: '#fff',
-                      marginLeft: i > 0 ? '-8px' : '0',
-                      zIndex: members.length - i
+                      border: '2px solid var(--surface)',
+                      display: 'flex', alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '9px', fontWeight: '700', color: '#fff',
+                      marginLeft: i > 0 ? '-7px' : '0',
+                      zIndex: members.length - i,
+                      position: 'relative'
                     }}
                   >
                     {m.name.charAt(0)}
                   </div>
                 ))}
-                {members.length > 4 && (
+                {members.length > (isMobile ? 3 : 4) && (
                   <div style={{
-                    width: '28px', height: '28px',
+                    width: '26px', height: '26px',
                     borderRadius: '50%',
-                    background: '#F0EDE8',
-                    border: '2px solid #fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '10px', fontWeight: '600', color: '#78716C',
-                    marginLeft: '-8px'
+                    background: 'var(--bg-2)',
+                    border: '2px solid var(--surface)',
+                    display: 'flex', alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '9px', fontWeight: '600',
+                    color: 'var(--muted)',
+                    marginLeft: '-7px', position: 'relative'
                   }}>
-                    +{members.length - 4}
+                    +{members.length - (isMobile ? 3 : 4)}
                   </div>
                 )}
               </div>
+
+              {/* Leave button on mobile */}
+              {isMobile && (
+                <button
+                  onClick={handleLeave}
+                  style={{
+                    padding: '6px 10px',
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '12px', color: 'var(--muted)',
+                    fontFamily: "'DM Sans', sans-serif",
+                    cursor: 'pointer'
+                  }}
+                >
+                  Leave
+                </button>
+              )}
             </div>
           </div>
 
           {/* Messages */}
           <div style={{
             flex: 1, overflowY: 'auto',
-            padding: '20px 24px',
+            padding: '16px 20px',
             display: 'flex', flexDirection: 'column',
             gap: '2px'
           }}>
@@ -575,17 +689,20 @@ function Room() {
                 gap: '8px', padding: '60px 0'
               }}>
                 <div style={{
-                  width: '48px', height: '48px',
-                  background: '#F0EDE8', borderRadius: '14px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '22px', marginBottom: '4px'
+                  width: '44px', height: '44px',
+                  background: 'var(--bg-2)', borderRadius: '12px',
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', marginBottom: '4px'
                 }}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#C4BFB9' }} />
+                  <div style={{
+                    width: '18px', height: '18px',
+                    borderRadius: '50%', background: 'var(--muted-3)'
+                  }} />
                 </div>
-                <p style={{ fontSize: '14px', fontWeight: '500', color: '#3C3C42' }}>
+                <p style={{ fontSize: '14px', fontWeight: '500', color: 'var(--ink-soft)' }}>
                   No messages yet
                 </p>
-                <p style={{ fontSize: '13px', color: '#A8A29E' }}>
+                <p style={{ fontSize: '13px', color: 'var(--muted-2)' }}>
                   Be the first to say something
                 </p>
               </div>
@@ -597,9 +714,10 @@ function Room() {
                 message={message}
                 myName={myName}
                 isFirst={isFirstInGroup(index)}
-                avatarColor={message.avatarColor || getAvatarColor(
-                  members.findIndex(m => m.name === message.sender)
-                )}
+                avatarColor={
+                  message.avatarColor ||
+                  getAvatarColor(members.findIndex(m => m.name === message.sender))
+                }
               />
             ))}
 
@@ -609,32 +727,35 @@ function Room() {
 
           {/* Input */}
           <div style={{
-            padding: '14px 20px 16px',
-            borderTop: '1px solid rgba(24,24,27,0.06)',
-            flexShrink: 0,
-            background: '#fff'
+            padding: '12px 16px 14px',
+            borderTop: '1px solid var(--border-2)',
+            flexShrink: 0, background: 'var(--surface)'
           }}>
-            {/* Replying as chip */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              marginBottom: '10px'
+              display: 'flex', alignItems: 'center',
+              gap: '8px', marginBottom: '8px'
             }}>
-              <Avatar name={myName} color={getAvatarColor(members.findIndex(m => m.name === myName))} size={20} />
-              <span style={{ fontSize: '12px', color: '#78716C' }}>
-                Chatting as <strong style={{ color: '#18181B', fontWeight: '600' }}>{myName}</strong>
+              <Avatar
+                name={myName}
+                color={getAvatarColor(members.findIndex(m => m.name === myName))}
+                size={18}
+              />
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                Chatting as{' '}
+                <strong style={{ color: 'var(--ink)', fontWeight: '600' }}>
+                  {myName}
+                </strong>
               </span>
             </div>
 
             <div style={{
-              display: 'flex', alignItems: 'flex-end', gap: '10px',
-              background: '#FAFAF7',
-              border: '1.5px solid rgba(24,24,27,0.1)',
+              display: 'flex', alignItems: 'flex-end', gap: '8px',
+              background: 'var(--bg)',
+              border: '1.5px solid var(--border)',
               borderRadius: '16px',
-              padding: '10px 12px 10px 16px',
+              padding: '10px 10px 10px 14px',
               transition: 'border-color 0.18s'
-            }}
-              onFocus={() => {}}
-            >
+            }}>
               <textarea
                 ref={textareaRef}
                 value={inputValue}
@@ -646,7 +767,7 @@ function Room() {
                   flex: 1, background: 'none',
                   border: 'none', outline: 'none',
                   fontFamily: "'DM Sans', sans-serif",
-                  fontSize: '14px', color: '#18181B',
+                  fontSize: '14px', color: 'var(--ink)',
                   resize: 'none', lineHeight: '1.5',
                   minHeight: '22px', maxHeight: '90px'
                 }}
@@ -656,44 +777,38 @@ function Room() {
                 disabled={!inputValue.trim()}
                 style={{
                   width: '34px', height: '34px',
-                  background: inputValue.trim() ? '#2D5BE3' : '#E5E0D8',
+                  background: inputValue.trim() ? 'var(--cobalt)' : 'var(--bg-3)',
                   border: 'none', borderRadius: '10px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'center',
                   cursor: inputValue.trim() ? 'pointer' : 'not-allowed',
-                  flexShrink: 0,
-                  transition: 'background 0.18s, transform 0.15s'
+                  flexShrink: 0, transition: 'background 0.18s, transform 0.15s'
                 }}
-                onMouseEnter={e => { if (inputValue.trim()) e.currentTarget.style.transform = 'scale(1.08)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                onMouseEnter={e => {
+                  if (inputValue.trim()) e.currentTarget.style.transform = 'scale(1.08)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M5 12h14M12 5l7 7-7 7"
+                    stroke="white" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#C4BFB9' }}>
+            <div style={{ textAlign: 'center', marginTop: '6px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--muted-3)' }}>
                 Enter to send · Shift Enter for new line
               </span>
             </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes typingBounce {
-          0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        div::-webkit-scrollbar { width: 4px; }
-        div::-webkit-scrollbar-track { background: transparent; }
-        div::-webkit-scrollbar-thumb { background: #E5E0D8; border-radius: 2px; }
-        textarea::placeholder { color: #A8A29E; }
-      `}</style>
     </div>
   )
 }

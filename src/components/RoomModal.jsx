@@ -15,51 +15,150 @@ function RoomModal({ code, onClose, onEnter }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-5"
       onClick={handleBackdropClick}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'center', padding: '20px'
+      }}
     >
-      <div className="bg-white rounded-3xl p-10 w-full max-w-[400px] shadow-2xl relative animate-[modalIn_0.3s_cubic-bezier(0.34,1.56,0.64,1)]">
+      <div style={{
+        background: 'var(--surface)',
+        borderRadius: '24px',
+        padding: '36px 32px',
+        width: '100%',
+        maxWidth: '400px',
+        position: 'relative',
+        animation: 'modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+        border: '1px solid var(--border)'
+      }}>
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F0EDE8] flex items-center justify-center text-[#78716C] text-sm hover:bg-[#E5E0D8] transition-colors"
+          style={{
+            position: 'absolute', top: '14px', right: '14px',
+            width: '30px', height: '30px',
+            borderRadius: '50%',
+            background: 'var(--bg-2)',
+            border: '1px solid var(--border)',
+            cursor: 'pointer',
+            fontSize: '13px', color: 'var(--muted)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'DM Sans', sans-serif"
+          }}
         >
-          x
+          ✕
         </button>
 
-        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 text-xl font-bold mb-4">
-          ok
+        <div style={{
+          width: '44px', height: '44px',
+          background: 'rgba(22,163,74,0.1)',
+          borderRadius: '12px',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '16px'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 13l4 4L19 7"
+              stroke="#16A34A"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
 
-        <h2 className="font-serif-display text-2xl font-normal tracking-tight text-[#18181B] mb-1">
+        <h2 style={{
+          fontFamily: "'Instrument Serif', Georgia, serif",
+          fontSize: '24px', fontWeight: '400',
+          letterSpacing: '-0.02em',
+          color: 'var(--ink)', marginBottom: '6px'
+        }}>
           Room created
         </h2>
-        <p className="text-sm text-[#78716C] leading-relaxed mb-6">
-          Share this code with anyone you want in the room. No account needed on their end.
+
+        <p style={{
+          fontSize: '14px', color: 'var(--muted)',
+          lineHeight: '1.6', marginBottom: '24px'
+        }}>
+          Share this code with anyone you want in the room. No account needed.
         </p>
 
-        <div className="bg-[#FAFAF7] border border-black/8 rounded-2xl p-5 text-center mb-4">
-          <div className="text-xs font-medium uppercase tracking-widest text-[#A8A29E] mb-2">
+        <div style={{
+          background: 'var(--bg)',
+          border: '1.5px solid var(--border)',
+          borderRadius: '16px',
+          padding: '20px',
+          textAlign: 'center',
+          marginBottom: '16px'
+        }}>
+          <div style={{
+            fontSize: '11px', fontWeight: '500',
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: 'var(--muted-2)', marginBottom: '8px'
+          }}>
             Room code
           </div>
-          <div className="text-4xl font-semibold tracking-[0.18em] text-[#18181B] leading-none">
+          <div style={{
+            fontSize: '2.2rem', fontWeight: '700',
+            letterSpacing: '0.2em', color: 'var(--ink)',
+            lineHeight: '1', fontFamily: "'DM Sans', sans-serif"
+          }}>
             {code}
           </div>
-          <div className="text-xs text-[#A8A29E] mt-2">
+          <div style={{
+            fontSize: '12px', color: 'var(--muted-2)',
+            marginTop: '8px'
+          }}>
             Expires when everyone leaves
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             onClick={handleCopy}
-            className="w-full py-3 rounded-xl text-sm font-medium bg-[#2D5BE3]/8 border border-[#2D5BE3]/20 text-[#2D5BE3] hover:bg-[#2D5BE3]/12 transition-colors"
+            style={{
+              width: '100%',
+              padding: '13px',
+              background: copied
+                ? 'rgba(22,163,74,0.08)'
+                : 'var(--cobalt-bg)',
+              border: `1.5px solid ${copied
+                ? 'rgba(22,163,74,0.25)'
+                : 'var(--cobalt-bd)'}`,
+              borderRadius: '12px',
+              fontSize: '14px', fontWeight: '500',
+              color: copied ? 'var(--green)' : 'var(--cobalt)',
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'all 0.18s',
+              letterSpacing: '-0.01em'
+            }}
           >
-            {copied ? 'Copied' : 'Copy code'}
+            {copied ? 'Copied to clipboard' : 'Copy code'}
           </button>
+
           <button
             onClick={onEnter}
-            className="w-full py-3 rounded-xl text-sm font-medium bg-[#18181B] text-white hover:bg-[#2D5BE3] transition-colors"
+            style={{
+              width: '100%',
+              padding: '13px',
+              background: 'var(--cobalt)',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px', fontWeight: '500',
+              color: '#fff',
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'background 0.18s',
+              letterSpacing: '-0.01em'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--cobalt-h)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--cobalt)'}
           >
             Enter room
           </button>
