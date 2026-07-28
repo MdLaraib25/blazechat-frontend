@@ -211,7 +211,14 @@ function Room() {
     let isRefreshing = false
 
     const handleBeforeUnload = () => { isRefreshing = true }
+    const handleConnectError = () => {
+      sessionStorage.removeItem('blazechat_room')
+      sessionStorage.removeItem('blazechat_name')
+      setRoomError('Could not connect to the server. Please try again.')
+    }
+
     window.addEventListener('beforeunload', handleBeforeUnload)
+    socket.once('connect_error', handleConnectError)
 
     if (!socket.connected) socket.connect()
 
@@ -222,6 +229,7 @@ function Room() {
     hasJoined = true
 
     socket.once('room-joined', ({ members, messages, assignedName }) => {
+      socket.off('connect_error', handleConnectError)
       if (assignedName && assignedName !== myName) {
         setMyName(assignedName)
         sessionStorage.setItem('blazechat_name', assignedName)
@@ -233,6 +241,7 @@ function Room() {
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      socket.off('connect_error', handleConnectError)
       if (hasJoined && !isRefreshing) {
         socket.emit('leave-room', { code })
         socket.disconnect()

@@ -1,7 +1,12 @@
 import { io } from 'socket.io-client'
 
-const socket = io(import.meta.env.VITE_SERVER_URL, {
-  autoConnect: false
+export const serverUrl =
+  import.meta.env.VITE_SERVER_URL ||
+  'https://blazechat-backend-production.up.railway.app'
+
+const socket = io(serverUrl, {
+  autoConnect: false,
+  transports: ['websocket', 'polling']
 })
 
 export default socket

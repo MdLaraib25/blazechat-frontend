@@ -12,12 +12,23 @@ function Landing() {
   const [showModal, setShowModal] = useState(false)
   const [joinError, setJoinError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   function handleCreateRoom() {
+    setCreateError('')
     setLoading(true)
+
+    const handleConnectError = () => {
+      setLoading(false)
+      setCreateError('Could not connect to the server. Please try again.')
+      socket.off('connect_error', handleConnectError)
+    }
+
+    socket.once('connect_error', handleConnectError)
     socket.connect()
     socket.emit('create-room', {})
     socket.once('room-created', ({ code }) => {
+      socket.off('connect_error', handleConnectError)
       setCreatedCode(code)
       setShowModal(true)
       setLoading(false)
@@ -225,6 +236,12 @@ function Landing() {
               {joinError && (
                 <p style={{ fontSize: '12px', color: 'var(--red-text)' }}>
                   {joinError}
+                </p>
+              )}
+
+              {createError && (
+                <p style={{ fontSize: '12px', color: 'var(--red-text)' }}>
+                  {createError}
                 </p>
               )}
 
