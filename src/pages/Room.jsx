@@ -207,28 +207,21 @@ function Room() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    let hasJoined = false
-    let isRefreshing = false
+    let active = true
 
-    const handleBeforeUnload = () => { isRefreshing = true }
+    const handleBeforeUnload = () => {
+      socket.disconnect()
+    }
+
     const handleConnectError = () => {
+      if (!active) return
       sessionStorage.removeItem('blazechat_room')
       sessionStorage.removeItem('blazechat_name')
       setRoomError('Could not connect to the server. Please try again.')
     }
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    socket.once('connect_error', handleConnectError)
-
-    if (!socket.connected) socket.connect()
-
-    sessionStorage.setItem('blazechat_room', code)
-    sessionStorage.setItem('blazechat_name', myName)
-
-    socket.emit('join-room', { code, name: myName })
-    hasJoined = true
-
-    socket.once('room-joined', ({ members, messages, assignedName }) => {
+    const handleRoomJoined = ({ members, messages, assignedName }) => {
+      if (!active) return
       socket.off('connect_error', handleConnectError)
       if (assignedName && assignedName !== myName) {
         setMyName(assignedName)
@@ -237,17 +230,33 @@ function Room() {
       setMembers(members.map((m, i) => ({ ...m, avatarColor: getAvatarColor(i) })))
       setMessages(messages)
       setConnected(true)
-    })
+    }
+
+    const joinRoom = () => {
+      socket.emit('join-room', { code, name: myName })
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    socket.once('connect_error', handleConnectError)
+    socket.once('room-joined', handleRoomJoined)
+
+    sessionStorage.setItem('blazechat_room', code)
+    sessionStorage.setItem('blazechat_name', myName)
+
+    if (socket.connected) {
+      joinRoom()
+    } else {
+      socket.once('connect', joinRoom)
+      socket.connect()
+    }
 
     return () => {
+      active = false
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      socket.off('connect', joinRoom)
       socket.off('connect_error', handleConnectError)
-      if (hasJoined && !isRefreshing) {
-        socket.emit('leave-room', { code })
-        socket.disconnect()
-      } else if (isRefreshing) {
-        socket.disconnect()
-      }
+      socket.off('room-joined', handleRoomJoined)
+      socket.disconnect()
     }
   }, [code])
 
